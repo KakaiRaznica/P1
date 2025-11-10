@@ -7,6 +7,8 @@ from pydantic import BaseModel
 from typing import Annotated, List, Optional
 from datetime import datetime
 
+from fastapi.middleware.cors import CORSMiddleware
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +16,14 @@ from database_connection import get_session
 from Models.users import Users
 
 app = FastAPI(title="Async FastAPI with PostgreSQL")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # или ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class UserCreate(BaseModel):
     first_name: str
@@ -62,7 +72,7 @@ async def get_user(user_id: int, session: Annotated[AsyncSession, Depends(get_se
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World1234"}
+    return {"message": "Hello World"}
 
 @app.get("/items/{item_id}")
 async def read_item(item_id: int, q: str = None):
