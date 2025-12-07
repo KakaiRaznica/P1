@@ -6,7 +6,9 @@ function App() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '' // only for registration
+    confirmPassword: '', // only for registration
+    firstName: '', // only for registration
+    lastName: ''   // only for registration
   });
   const [errors, setErrors] = useState({});
 
@@ -42,6 +44,12 @@ function App() {
     }
 
     if (!isLogin) { // Registration validation
+      if (!formData.firstName) {
+        newErrors.firstName = 'First name is required';
+      }
+      if (!formData.lastName) {
+        newErrors.lastName = 'Last name is required';
+      }
       if (!formData.confirmPassword) {
         newErrors.confirmPassword = 'Please confirm your password';
       } else if (formData.password !== formData.confirmPassword) {
@@ -61,17 +69,41 @@ function App() {
     }
 
     try {
-      const endpoint = isLogin ? '/api/login' : '/api/register';
-      const payload = {
-        email: formData.email,
-        password: formData.password
-      };
+      const endpoint = isLogin ? '/login' : '/register';
+      let payload;
       
-      // In a real app, you would make an API call here
-      console.log(`${isLogin ? 'Login' : 'Registration'} attempt:`, payload);
+      if(isLogin) {
+        // Login payload
+        payload = {
+          email: formData.email,
+          password: formData.password
+        };
+      } else {
+        // Registration payload
+        payload = {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          password: formData.password
+        };
+      }
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Make API call
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log(`${isLogin ? 'Login' : 'Registration'} successful:`, result);
       
       alert(`${isLogin ? 'Login' : 'Registration'} successful!`);
       
@@ -79,13 +111,15 @@ function App() {
       setFormData({
         email: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        firstName: '',
+        lastName: ''
       });
     } catch (error) {
       console.error('Error:', error);
       setErrors({
         ...errors,
-        submit: 'An error occurred. Please try again.'
+        submit: error.message || 'An error occurred. Please try again.'
       });
     }
   };
@@ -95,7 +129,9 @@ function App() {
     setFormData({
       email: '',
       password: '',
-      confirmPassword: ''
+      confirmPassword: '',
+      firstName: '',
+      lastName: ''
     });
     setErrors({});
   };
@@ -119,6 +155,38 @@ function App() {
             />
             {errors.email && <span className="error-message">{errors.email}</span>}
           </div>
+          
+          {!isLogin && (
+            <div className="input-group">
+              <label htmlFor="firstName">First Name</label>
+              <input
+                type="text"
+                id="firstName"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                className={errors.firstName ? 'error' : ''}
+                placeholder="Enter your first name"
+              />
+              {errors.firstName && <span className="error-message">{errors.firstName}</span>}
+            </div>
+          )}
+          
+          {!isLogin && (
+            <div className="input-group">
+              <label htmlFor="lastName">Last Name</label>
+              <input
+                type="text"
+                id="lastName"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                className={errors.lastName ? 'error' : ''}
+                placeholder="Enter your last name"
+              />
+              {errors.lastName && <span className="error-message">{errors.lastName}</span>}
+            </div>
+          )}
           
           <div className="input-group">
             <label htmlFor="password">Password</label>
